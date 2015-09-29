@@ -1,5 +1,5 @@
-all: main.o Any.o Bencode.o sha1.o Torrent.o HttpSender.o
-	g++ Bencode.o Any.o Torrent.o HttpSender.o  main.o sha1.o -std=c++11 -lcurl -o main
+all: main.o Any.o Bencode.o sha1.o Torrent.o HttpSender.o utils.o
+	g++ Bencode.o Any.o Torrent.o HttpSender.o  main.o sha1.o utils.o -std=c++11 -lcurl -o main
 Bencode.o:
 	g++ -c Bencode.cpp -std=c++11  
 Torrent.o:
