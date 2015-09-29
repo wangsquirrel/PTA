@@ -8,17 +8,26 @@
 
 Torrent::Torrent(std::string file_name)
 {
+	//load torrent from a file
 	std::ifstream in(file_name.c_str());
 	std::string str;
 	copy( std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>(), back_inserter(str));
 	in.close();
 	Bencode b(str);
-	std::map<std::string, Any> msa = any_cast<std::map<std::string, Any> >(b    .inter_obj);
+	std::map<std::string, Any> msa = any_cast<std::map<std::string, Any> >(b.inter_obj);
+
+	//extarct tracker
+	tracker = any_cast<std::string>(msa["announce"]);
+	std::cout<<tracker<<std::endl;
+
+	// extract info and calc info_hash
 	Bencode info_Bencode(msa["info"]);
 	std::string bs = info_Bencode.dump();
 	sha1((const unsigned char *)bs.c_str(), bs.length(), info_hash);
+
+	// extract length include 2 cases
 	std::map<std::string, Any> info = any_cast<std::map<std::string, Any> >(msa["info"]);
-	// multi-files
+	// multiple file mode
 	if (info.count("files") == 1)
 	{
 		unsigned long long uuu = 0;
@@ -30,11 +39,12 @@ Torrent::Torrent(std::string file_name)
 			length = uuu;
 		}
 	}
+	//single file mode
 	else 
 	{
 		length = any_cast<unsigned long long>(info["length"]);
 		
 	}
-	//length = strtoull(slen.c_str(), NULL, 10);
+	
 
 }
