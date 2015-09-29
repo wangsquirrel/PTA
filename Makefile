@@ -1,10 +1,13 @@
-all: main.o Any.o Bencode.o sha1.o Torrent.o HttpSender.o utils.o
-	g++ Bencode.o Any.o Torrent.o HttpSender.o  main.o sha1.o utils.o -std=c++11 -lcurl -o main
+SRCS := main.cpp Any.cpp Bencode.cpp sha1.cpp Torrent.cpp HttpSender.cpp utils.cpp
+OBJS := $(SRCS:%.cpp=%.o)
+main: $(OBJS)
+	$(CXX)  $(OBJS)   -lcurl -o $@
 Bencode.o:
-	g++ -c Bencode.cpp -std=c++11  
+	$(CXX) -c  Bencode.cpp -std=c++11
 Torrent.o:
-	g++ -c Torrent.cpp -std=c++11
+	$(CXX) -c Torrent.cpp -std=c++11
 HttpSender.o:
-	g++ -c HttpSender.cpp  -std=c++11
+	$(CXX) -c HttpSender.cpp  -std=c++11
+.PHONY: clean
 clean:
-	-rm *.o main
+	-$(RM) *.o main
