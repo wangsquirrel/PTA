@@ -45,6 +45,9 @@ Torrent::Torrent(std::string file_name)
 		length = any_cast<unsigned long long>(info["length"]);
 		
 	}
+
+	//extract name
+	name = any_cast<std::string>(info["name"]);
 	
 
 }

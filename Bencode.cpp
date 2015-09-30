@@ -85,10 +85,12 @@ std::string Bencode::dump()
 	{
 		std::string result;
 		std::vector<Any> va = any_cast<std::vector<Any> >(inter_obj);
+		result += "l";
 		for (auto i : va)
 		{
-			result += Bencode(i).dump();
+			result = result + Bencode(i).dump();
 		}
+		result += "e";
 		return result;
 	}
 	else if (inter_obj.type().name() == typeid(std::map<std::string, Any>).name()) 
