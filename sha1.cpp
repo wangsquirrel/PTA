@@ -1,305 +1,305 @@
 #include <stdio.h>
- #include <stdint.h>
- #include <string.h>
- #include <assert.h>
- #include <iostream>
- 
- //×Ö½ÚĞòµÄĞ¡Í·ºÍ´óÍ·µÄÎÊÌâ
- #define ZEN_LITTLE_ENDIAN  0x0123
- #define ZEN_BIG_ENDIAN     0x3210
- 
- //Ä¿Ç°ËùÓĞµÄ´úÂë¶¼ÊÇÎªÁËĞ¡Í·µ³·şÎñµÄ£¬²»ÖªµÀÓĞÉúÖ®ÄêÕâÌ×´úÂëÊÇ·ñ»¹»áÎª´óÍ·µ³·şÎñÒ»´Î£¿
- #ifndef ZEN_BYTES_ORDER
- #define ZEN_BYTES_ORDER    ZEN_LITTLE_ENDIAN
- #endif
- 
- #ifndef ZEN_SWAP_UINT16
- #define ZEN_SWAP_UINT16(x)  ((((x) & 0xff00) >>  8) | (((x) & 0x00ff) <<  8))
- #endif
- #ifndef ZEN_SWAP_UINT32
- #define ZEN_SWAP_UINT32(x)  ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | \
-     (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
- #endif
- #ifndef ZEN_SWAP_UINT64
- #define ZEN_SWAP_UINT64(x)  ((((x) & 0xff00000000000000) >> 56) | (((x) & 0x00ff000000000000) >>  40) | \
-     (((x) & 0x0000ff0000000000) >> 24) | (((x) & 0x000000ff00000000) >>  8) | \
-     (((x) & 0x00000000ff000000) << 8 ) | (((x) & 0x0000000000ff0000) <<  24) | \
-     (((x) & 0x000000000000ff00) << 40 ) | (((x) & 0x00000000000000ff) <<  56))
- #endif
- 
- #define ROTL32(dword, n) ((dword) << (n) ^ ((dword) >> (32 - (n))))  
- #define ROTR32(dword, n) ((dword) >> (n) ^ ((dword) << (32 - (n))))  
- #define ROTL64(qword, n) ((qword) << (n) ^ ((qword) >> (64 - (n))))  
- #define ROTR64(qword, n) ((qword) >> (n) ^ ((qword) << (64 - (n))))  
- 
- //½«Ò»¸ö£¨×Ö·û´®£©Êı×é£¬¿½±´µ½ÁíÍâÒ»¸öuint32_tÊı×é£¬Í¬Ê±Ã¿¸öuint32_t·´×Ö½ÚĞò
- void *swap_uint32_memcpy(void *to, const void *from, size_t length)
- {
-     memcpy(to, from, length);
-     size_t remain_len =  (4 - (length & 3)) & 3;
- 
-     //Êı¾İ²»ÊÇ4×Ö½ÚµÄ±¶Êı,²¹³ä0
-     if (remain_len)
-     {
-         for (size_t i = 0; i < remain_len; ++i)
-         {
-             *((char *)(to) + length + i) = 0;
-         }
-         //µ÷Õû³É4µÄ±¶Êı
-         length += remain_len;
-     }
- 
-     //ËùÓĞµÄÊı¾İ·´×ª
-     for (size_t i = 0; i < length / 4; ++i)
-     {
-         ((uint32_t *)to)[i] = ZEN_SWAP_UINT32(((uint32_t *)to)[i]);
-     }
- 
-     return to;
- }
- 
- ///MD5µÄ½á¹ûÊı¾İ³¤¶È
- static const size_t ZEN_MD5_HASH_SIZE   = 16;
- ///SHA1µÄ½á¹ûÊı¾İ³¤¶È
- static const size_t ZEN_SHA1_HASH_SIZE  = 20;
- 
- 
- 
- 
- 
- 
- /*!
- @brief      ÇóÄÚ´æ¿éBUFFERµÄSHA1Öµ
- @return     unsigned char* ·µ»ØµÄµÄ½á¹û
- @param[in]  buf    ÇóSHA1µÄÄÚ´æBUFFERÖ¸Õë
- @param[in]  size   BUFFER³¤¶È
- @param[out] result ½á¹û
- */
- unsigned char * sha1(unsigned const char *buf,
-                     size_t size,
-                     unsigned char result[ZEN_SHA1_HASH_SIZE]);
+#include <stdint.h>
+#include <string.h>
+#include <assert.h>
+#include <iostream>
 
- 
- 
- 
- //================================================================================================
- //SHA1µÄËã·¨
- 
- //Ã¿´Î´¦ÀíµÄBLOCKµÄ´óĞ¡
- static const size_t ZEN_SHA1_BLOCK_SIZE = 64;
- 
- //SHA1Ëã·¨µÄÉÏÏÂÎÄ£¬±£´æÒ»Ğ©×´Ì¬£¬ÖĞ¼äÊı¾İ£¬½á¹û
- typedef struct sha1_ctx
- {
- 
-     //´¦ÀíµÄÊı¾İµÄ³¤¶È
-     uint64_t length_;
-     //»¹Ã»ÓĞ´¦ÀíµÄÊı¾İ³¤¶È
-     uint64_t unprocessed_;
-     /* 160-bit algorithm internal hashing state */
-     uint32_t hash_[5];
- } sha1_ctx;
- 
- //ÄÚ²¿º¯Êı£¬SHA1Ëã·¨µÄÉÏÏÂÎÄµÄ³õÊ¼»¯
- static void zen_sha1_init(sha1_ctx *ctx)
- {
-     ctx->length_ = 0;
-     ctx->unprocessed_ = 0;
-     // ³õÊ¼»¯Ëã·¨µÄ¼¸¸ö³£Á¿£¬Ä§ÊõÊı
-     ctx->hash_[0] = 0x67452301;
-     ctx->hash_[1] = 0xefcdab89;
-     ctx->hash_[2] = 0x98badcfe;
-     ctx->hash_[3] = 0x10325476;
-     ctx->hash_[4] = 0xc3d2e1f0;
- }
- 
- 
- /*!
- @brief      ÄÚ²¿º¯Êı£¬¶ÔÒ»¸ö64bitÄÚ´æ¿é½øĞĞÕªÒª(ÔÓ´Õ)´¦Àí£¬
- @param      hash  ´æ·Å¼ÆËãhash½á¹ûµÄµÄÊı×é
- @param      block Òª¼ÆËãµÄ´¦ÀíµÃÄÚ´æ¿é
- */
- static void zen_sha1_process_block(uint32_t hash[5],
-                                    const uint32_t block[ZEN_SHA1_BLOCK_SIZE / 4])
- {
-     size_t        t;
-     uint32_t      wblock[80];
-     register uint32_t      a, b, c, d, e, temp;
- 
-     //SHA1Ëã·¨´¦ÀíµÄÄÚ²¿Êı¾İÒªÇóÊÇ´óÍ·µ³µÄ£¬ÔÚĞ¡Í·µÄ»·¾³×ª»»
- #if ZEN_BYTES_ORDER == ZEN_LITTLE_ENDIAN
-     swap_uint32_memcpy(wblock, block, ZEN_SHA1_BLOCK_SIZE);
- #else
-     ::memcpy(wblock, block, ZEN_SHA1_BLOCK_SIZE);
- #endif
- 
-     //´¦Àí
-     for (t = 16; t < 80; t++)
-     {
-         wblock[t] = ROTL32(wblock[t - 3] ^ wblock[t - 8] ^ wblock[t - 14] ^ wblock[t - 16], 1);
-     }
- 
-     a = hash[0];
-     b = hash[1];
-     c = hash[2];
-     d = hash[3];
-     e = hash[4];
- 
-     for (t = 0; t < 20; t++)
-     {
-         /* the following is faster than ((B & C) | ((~B) & D)) */
-         temp =  ROTL32(a, 5) + (((c ^ d) & b) ^ d)
-                 + e + wblock[t] + 0x5A827999;
-         e = d;
-         d = c;
-         c = ROTL32(b, 30);
-         b = a;
-         a = temp;
-     }
- 
-     for (t = 20; t < 40; t++)
-     {
-         temp = ROTL32(a, 5) + (b ^ c ^ d) + e + wblock[t] + 0x6ED9EBA1;
-         e = d;
-         d = c;
-         c = ROTL32(b, 30);
-         b = a;
-         a = temp;
-     }
- 
-     for (t = 40; t < 60; t++)
-     {
-         temp = ROTL32(a, 5) + ((b & c) | (b & d) | (c & d))
-                + e + wblock[t] + 0x8F1BBCDC;
-         e = d;
-         d = c;
-         c = ROTL32(b, 30);
-         b = a;
-         a = temp;
-     }
- 
-     for (t = 60; t < 80; t++)
-     {
-         temp = ROTL32(a, 5) + (b ^ c ^ d) + e + wblock[t] + 0xCA62C1D6;
-         e = d;
-         d = c;
-         c = ROTL32(b, 30);
-         b = a;
-         a = temp;
-     }
- 
-     hash[0] += a;
-     hash[1] += b;
-     hash[2] += c;
-     hash[3] += d;
-     hash[4] += e;
- }
- 
- 
- /*!
- @brief      ÄÚ²¿º¯Êı£¬´¦ÀíÊı¾İµÄÇ°Ãæ²¿·Ö(>64×Ö½ÚµÄ²¿·Ö)£¬Ã¿´Î×é³ÉÒ»¸ö64×Ö½ÚµÄblock¾Í½øĞĞÔÓ´Õ´¦Àí
- @param      ctx  Ëã·¨µÄÉÏÏÂÎÄ£¬¼ÇÂ¼ÖĞ¼äÊı¾İ£¬½á¹ûµÈ
- @param      msg  Òª½øĞĞ¼ÆËãµÄÊı¾İbuffer
- @param      size ³¤¶È
- */
- static void zen_sha1_update(sha1_ctx *ctx,
-                             const unsigned char *buf, 
-                             size_t size)
- {
-     //ÎªÁËÈÃzen_sha1_update¿ÉÒÔ¶à´Î½øÈë£¬³¤¶È¿ÉÒÔÀÛ¼Æ
-     ctx->length_ += size;
- 
-     //Ã¿¸ö´¦ÀíµÄ¿é¶¼ÊÇ64×Ö½Ú
-     while (size >= ZEN_SHA1_BLOCK_SIZE)
-     {
-         zen_sha1_process_block(ctx->hash_, reinterpret_cast<const uint32_t *>(buf));
-         buf  += ZEN_SHA1_BLOCK_SIZE;
-         size -= ZEN_SHA1_BLOCK_SIZE;
-     }
- 
-     ctx->unprocessed_ = size;
- }
- 
- 
- /*!
- @brief      ÄÚ²¿º¯Êı£¬´¦ÀíÊı¾İµÄ×îºó²¿·Ö£¬Ìí¼Ó0x80,²¹0£¬Ôö¼Ó³¤¶ÈĞÅÏ¢
- @param      ctx    Ëã·¨µÄÉÏÏÂÎÄ£¬¼ÇÂ¼ÖĞ¼äÊı¾İ£¬½á¹ûµÈ
- @param      msg    Òª½øĞĞ¼ÆËãµÄÊı¾İbuffer
- @param      result ·µ»ØµÄ½á¹û
- */
- static void zen_sha1_final(sha1_ctx *ctx, 
-                            const unsigned char *msg,
-                            size_t size, 
-                            unsigned char *result)
- {
- 
-     uint32_t message[ZEN_SHA1_BLOCK_SIZE / 4];
- 
-     //±£´æÊ£ÓàµÄÊı¾İ£¬ÎÒÃÇÒªÆ´³ö×îºó1¸ö£¨»òÕßÁ½¸ö£©Òª´¦ÀíµÄ¿é£¬Ç°ÃæµÄËã·¨±£Ö¤ÁË£¬×îºóÒ»¸ö¿é¿Ï¶¨Ğ¡ÓÚ64¸ö×Ö½Ú
-     if (ctx->unprocessed_)
-     {
-         memcpy(message, msg + size - ctx->unprocessed_, static_cast<size_t>( ctx->unprocessed_));
-     }
- 
-     //µÃµ½0x80ÒªÌí¼ÓÔÚµÄÎ»ÖÃ£¨ÔÚuint32_t Êı×éÖĞ£©£¬
-     uint32_t index = ((uint32_t)ctx->length_ & 63) >> 2;
-     uint32_t shift = ((uint32_t)ctx->length_ & 3) * 8;
- 
-     //Ìí¼Ó0x80½øÈ¥£¬²¢ÇÒ°ÑÓàÏÂµÄ¿Õ¼ä²¹³ä0
-     message[index]   &= ~(0xFFFFFFFF << shift);
-     message[index++] ^= 0x80 << shift;
- 
-     //Èç¹ûÕâ¸öblock»¹ÎŞ·¨´¦Àí£¬ÆäºóÃæµÄ³¤¶ÈÎŞ·¨ÈİÄÉ³¤¶È64bit£¬ÄÇÃ´ÏÈ´¦ÀíÕâ¸öblock
-     if (index > 14)
-     {
-         while (index < 16)
-         {
-             message[index++] = 0;
-         }
- 
-         zen_sha1_process_block(ctx->hash_, message);
-         index = 0;
-     }
- 
-     //²¹0
-     while (index < 14)
-     {
-         message[index++] = 0;
-     }
- 
-     //±£´æ³¤¶È£¬×¢ÒâÊÇbitÎ»µÄ³¤¶È,Õâ¸öÎÊÌâÈÃÎÒ¿´×ÅÓôÃÆÁË°ëÌì£¬
-     uint64_t data_len = (ctx->length_) << 3;
- 
-     //×¢ÒâSHA1Ëã·¨ÒªÇóµÄ64bitµÄ³¤¶ÈÊÇ´óÍ·BIG-ENDIAN£¬ÔÚĞ¡Í·µÄÊÀ½çÒª½øĞĞ×ª»»
- #if ZEN_BYTES_ORDER == ZEN_LITTLE_ENDIAN
-     data_len = ZEN_SWAP_UINT64(data_len);
- #endif
- 
-     message[14] = (uint32_t) (data_len & 0x00000000FFFFFFFF);
-     message[15] = (uint32_t) ((data_len & 0xFFFFFFFF00000000ULL) >> 32);
- 
-     zen_sha1_process_block(ctx->hash_, message);
- 
-     //×¢Òâ½á¹ûÊÇ´óÍ·µ³µÄ£¬ÔÚĞ¡Í·µÄÊÀ½çÒª½øĞĞ×ª»»
- #if ZEN_BYTES_ORDER == ZEN_LITTLE_ENDIAN
-     swap_uint32_memcpy(result, &ctx->hash_, ZEN_SHA1_HASH_SIZE);
- #else
-     memcpy(result, &ctx->hash_, ZEN_SHA1_HASH_SIZE);
- #endif
- }
- 
- 
- 
- //¼ÆËãÒ»¸öÄÚ´æÊı¾İµÄSHA1Öµ
- unsigned char *sha1(unsigned const  char *msg,
-                              size_t size,
-                              unsigned char result[ZEN_SHA1_HASH_SIZE])
- {
-     assert(result != NULL);
- 
-     sha1_ctx ctx;
-     zen_sha1_init(&ctx);
-     zen_sha1_update(&ctx, msg, size);
-     zen_sha1_final(&ctx, msg, size, result);
-     return result;
- }
+//å­—èŠ‚åºçš„å°å¤´å’Œå¤§å¤´çš„é—®é¢˜
+#define ZEN_LITTLE_ENDIAN  0x0123
+#define ZEN_BIG_ENDIAN     0x3210
+
+//ç›®å‰æ‰€æœ‰çš„ä»£ç éƒ½æ˜¯ä¸ºäº†å°å¤´å…šæœåŠ¡çš„ï¼Œä¸çŸ¥é“æœ‰ç”Ÿä¹‹å¹´è¿™å¥—ä»£ç æ˜¯å¦è¿˜ä¼šä¸ºå¤§å¤´å…šæœåŠ¡ä¸€æ¬¡ï¼Ÿ
+#ifndef ZEN_BYTES_ORDER
+#define ZEN_BYTES_ORDER    ZEN_LITTLE_ENDIAN
+#endif
+
+#ifndef ZEN_SWAP_UINT16
+#define ZEN_SWAP_UINT16(x)  ((((x) & 0xff00) >>  8) | (((x) & 0x00ff) <<  8))
+#endif
+#ifndef ZEN_SWAP_UINT32
+#define ZEN_SWAP_UINT32(x)  ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | \
+    (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
+#endif
+#ifndef ZEN_SWAP_UINT64
+#define ZEN_SWAP_UINT64(x)  ((((x) & 0xff00000000000000) >> 56) | (((x) & 0x00ff000000000000) >>  40) | \
+    (((x) & 0x0000ff0000000000) >> 24) | (((x) & 0x000000ff00000000) >>  8) | \
+    (((x) & 0x00000000ff000000) << 8 ) | (((x) & 0x0000000000ff0000) <<  24) | \
+    (((x) & 0x000000000000ff00) << 40 ) | (((x) & 0x00000000000000ff) <<  56))
+#endif
+
+#define ROTL32(dword, n) ((dword) << (n) ^ ((dword) >> (32 - (n))))  
+#define ROTR32(dword, n) ((dword) >> (n) ^ ((dword) << (32 - (n))))  
+#define ROTL64(qword, n) ((qword) << (n) ^ ((qword) >> (64 - (n))))  
+#define ROTR64(qword, n) ((qword) >> (n) ^ ((qword) << (64 - (n))))  
+
+//å°†ä¸€ä¸ªï¼ˆå­—ç¬¦ä¸²ï¼‰æ•°ç»„ï¼Œæ‹·è´åˆ°å¦å¤–ä¸€ä¸ªuint32_tæ•°ç»„ï¼ŒåŒæ—¶æ¯ä¸ªuint32_tåå­—èŠ‚åº
+void *swap_uint32_memcpy(void *to, const void *from, size_t length)
+{
+    memcpy(to, from, length);
+    size_t remain_len =  (4 - (length & 3)) & 3;
+
+    //æ•°æ®ä¸æ˜¯4å­—èŠ‚çš„å€æ•°,è¡¥å……0
+    if (remain_len)
+    {
+        for (size_t i = 0; i < remain_len; ++i)
+        {
+            *((char *)(to) + length + i) = 0;
+        }
+        //è°ƒæ•´æˆ4çš„å€æ•°
+        length += remain_len;
+    }
+
+    //æ‰€æœ‰çš„æ•°æ®åè½¬
+    for (size_t i = 0; i < length / 4; ++i)
+    {
+        ((uint32_t *)to)[i] = ZEN_SWAP_UINT32(((uint32_t *)to)[i]);
+    }
+
+    return to;
+}
+
+///MD5çš„ç»“æœæ•°æ®é•¿åº¦
+static const size_t ZEN_MD5_HASH_SIZE   = 16;
+///SHA1çš„ç»“æœæ•°æ®é•¿åº¦
+static const size_t ZEN_SHA1_HASH_SIZE  = 20;
+
+
+
+
+
+
+/*!
+@brief      æ±‚å†…å­˜å—BUFFERçš„SHA1å€¼
+@return     unsigned char* è¿”å›çš„çš„ç»“æœ
+@param[in]  buf    æ±‚SHA1çš„å†…å­˜BUFFERæŒ‡é’ˆ
+@param[in]  size   BUFFERé•¿åº¦
+@param[out] result ç»“æœ
+*/
+unsigned char * sha1(unsigned const char *buf,
+                    size_t size,
+                    unsigned char result[ZEN_SHA1_HASH_SIZE]);
+
+
+
+
+//================================================================================================
+//SHA1çš„ç®—æ³•
+
+//æ¯æ¬¡å¤„ç†çš„BLOCKçš„å¤§å°
+static const size_t ZEN_SHA1_BLOCK_SIZE = 64;
+
+//SHA1ç®—æ³•çš„ä¸Šä¸‹æ–‡ï¼Œä¿å­˜ä¸€äº›çŠ¶æ€ï¼Œä¸­é—´æ•°æ®ï¼Œç»“æœ
+typedef struct sha1_ctx
+{
+
+    //å¤„ç†çš„æ•°æ®çš„é•¿åº¦
+    uint64_t length_;
+    //è¿˜æ²¡æœ‰å¤„ç†çš„æ•°æ®é•¿åº¦
+    uint64_t unprocessed_;
+    /* 160-bit algorithm internal hashing state */
+    uint32_t hash_[5];
+} sha1_ctx;
+
+//å†…éƒ¨å‡½æ•°ï¼ŒSHA1ç®—æ³•çš„ä¸Šä¸‹æ–‡çš„åˆå§‹åŒ–
+static void zen_sha1_init(sha1_ctx *ctx)
+{
+    ctx->length_ = 0;
+    ctx->unprocessed_ = 0;
+    // åˆå§‹åŒ–ç®—æ³•çš„å‡ ä¸ªå¸¸é‡ï¼Œé­”æœ¯æ•°
+    ctx->hash_[0] = 0x67452301;
+    ctx->hash_[1] = 0xefcdab89;
+    ctx->hash_[2] = 0x98badcfe;
+    ctx->hash_[3] = 0x10325476;
+    ctx->hash_[4] = 0xc3d2e1f0;
+}
+
+
+/*!
+@brief      å†…éƒ¨å‡½æ•°ï¼Œå¯¹ä¸€ä¸ª64bitå†…å­˜å—è¿›è¡Œæ‘˜è¦(æ‚å‡‘)å¤„ç†ï¼Œ
+@param      hash  å­˜æ”¾è®¡ç®—hashç»“æœçš„çš„æ•°ç»„
+@param      block è¦è®¡ç®—çš„å¤„ç†å¾—å†…å­˜å—
+*/
+static void zen_sha1_process_block(uint32_t hash[5],
+                                   const uint32_t block[ZEN_SHA1_BLOCK_SIZE / 4])
+{
+    size_t        t;
+    uint32_t      wblock[80];
+    register uint32_t      a, b, c, d, e, temp;
+
+    //SHA1ç®—æ³•å¤„ç†çš„å†…éƒ¨æ•°æ®è¦æ±‚æ˜¯å¤§å¤´å…šçš„ï¼Œåœ¨å°å¤´çš„ç¯å¢ƒè½¬æ¢
+#if ZEN_BYTES_ORDER == ZEN_LITTLE_ENDIAN
+    swap_uint32_memcpy(wblock, block, ZEN_SHA1_BLOCK_SIZE);
+#else
+    ::memcpy(wblock, block, ZEN_SHA1_BLOCK_SIZE);
+#endif
+
+    //å¤„ç†
+    for (t = 16; t < 80; t++)
+    {
+        wblock[t] = ROTL32(wblock[t - 3] ^ wblock[t - 8] ^ wblock[t - 14] ^ wblock[t - 16], 1);
+    }
+
+    a = hash[0];
+    b = hash[1];
+    c = hash[2];
+    d = hash[3];
+    e = hash[4];
+
+    for (t = 0; t < 20; t++)
+    {
+        /* the following is faster than ((B & C) | ((~B) & D)) */
+        temp =  ROTL32(a, 5) + (((c ^ d) & b) ^ d)
+                + e + wblock[t] + 0x5A827999;
+        e = d;
+        d = c;
+        c = ROTL32(b, 30);
+        b = a;
+        a = temp;
+    }
+
+    for (t = 20; t < 40; t++)
+    {
+        temp = ROTL32(a, 5) + (b ^ c ^ d) + e + wblock[t] + 0x6ED9EBA1;
+        e = d;
+        d = c;
+        c = ROTL32(b, 30);
+        b = a;
+        a = temp;
+    }
+
+    for (t = 40; t < 60; t++)
+    {
+        temp = ROTL32(a, 5) + ((b & c) | (b & d) | (c & d))
+               + e + wblock[t] + 0x8F1BBCDC;
+        e = d;
+        d = c;
+        c = ROTL32(b, 30);
+        b = a;
+        a = temp;
+    }
+
+    for (t = 60; t < 80; t++)
+    {
+        temp = ROTL32(a, 5) + (b ^ c ^ d) + e + wblock[t] + 0xCA62C1D6;
+        e = d;
+        d = c;
+        c = ROTL32(b, 30);
+        b = a;
+        a = temp;
+    }
+
+    hash[0] += a;
+    hash[1] += b;
+    hash[2] += c;
+    hash[3] += d;
+    hash[4] += e;
+}
+
+
+/*!
+@brief      å†…éƒ¨å‡½æ•°ï¼Œå¤„ç†æ•°æ®çš„å‰é¢éƒ¨åˆ†(>64å­—èŠ‚çš„éƒ¨åˆ†)ï¼Œæ¯æ¬¡ç»„æˆä¸€ä¸ª64å­—èŠ‚çš„blockå°±è¿›è¡Œæ‚å‡‘å¤„ç†
+@param      ctx  ç®—æ³•çš„ä¸Šä¸‹æ–‡ï¼Œè®°å½•ä¸­é—´æ•°æ®ï¼Œç»“æœç­‰
+@param      msg  è¦è¿›è¡Œè®¡ç®—çš„æ•°æ®buffer
+@param      size é•¿åº¦
+*/
+static void zen_sha1_update(sha1_ctx *ctx,
+                            const unsigned char *buf, 
+                            size_t size)
+{
+    //ä¸ºäº†è®©zen_sha1_updateå¯ä»¥å¤šæ¬¡è¿›å…¥ï¼Œé•¿åº¦å¯ä»¥ç´¯è®¡
+    ctx->length_ += size;
+
+    //æ¯ä¸ªå¤„ç†çš„å—éƒ½æ˜¯64å­—èŠ‚
+    while (size >= ZEN_SHA1_BLOCK_SIZE)
+    {
+        zen_sha1_process_block(ctx->hash_, reinterpret_cast<const uint32_t *>(buf));
+        buf  += ZEN_SHA1_BLOCK_SIZE;
+        size -= ZEN_SHA1_BLOCK_SIZE;
+    }
+
+    ctx->unprocessed_ = size;
+}
+
+
+/*!
+@brief      å†…éƒ¨å‡½æ•°ï¼Œå¤„ç†æ•°æ®çš„æœ€åéƒ¨åˆ†ï¼Œæ·»åŠ 0x80,è¡¥0ï¼Œå¢åŠ é•¿åº¦ä¿¡æ¯
+@param      ctx    ç®—æ³•çš„ä¸Šä¸‹æ–‡ï¼Œè®°å½•ä¸­é—´æ•°æ®ï¼Œç»“æœç­‰
+@param      msg    è¦è¿›è¡Œè®¡ç®—çš„æ•°æ®buffer
+@param      result è¿”å›çš„ç»“æœ
+*/
+static void zen_sha1_final(sha1_ctx *ctx, 
+                           const unsigned char *msg,
+                           size_t size, 
+                           unsigned char *result)
+{
+
+    uint32_t message[ZEN_SHA1_BLOCK_SIZE / 4];
+
+    //ä¿å­˜å‰©ä½™çš„æ•°æ®ï¼Œæˆ‘ä»¬è¦æ‹¼å‡ºæœ€å1ä¸ªï¼ˆæˆ–è€…ä¸¤ä¸ªï¼‰è¦å¤„ç†çš„å—ï¼Œå‰é¢çš„ç®—æ³•ä¿è¯äº†ï¼Œæœ€åä¸€ä¸ªå—è‚¯å®šå°äº64ä¸ªå­—èŠ‚
+    if (ctx->unprocessed_)
+    {
+        memcpy(message, msg + size - ctx->unprocessed_, static_cast<size_t>( ctx->unprocessed_));
+    }
+
+    //å¾—åˆ°0x80è¦æ·»åŠ åœ¨çš„ä½ç½®ï¼ˆåœ¨uint32_t æ•°ç»„ä¸­ï¼‰ï¼Œ
+    uint32_t index = ((uint32_t)ctx->length_ & 63) >> 2;
+    uint32_t shift = ((uint32_t)ctx->length_ & 3) * 8;
+
+    //æ·»åŠ 0x80è¿›å»ï¼Œå¹¶ä¸”æŠŠä½™ä¸‹çš„ç©ºé—´è¡¥å……0
+    message[index]   &= ~(0xFFFFFFFF << shift);
+    message[index++] ^= 0x80 << shift;
+
+    //å¦‚æœè¿™ä¸ªblockè¿˜æ— æ³•å¤„ç†ï¼Œå…¶åé¢çš„é•¿åº¦æ— æ³•å®¹çº³é•¿åº¦64bitï¼Œé‚£ä¹ˆå…ˆå¤„ç†è¿™ä¸ªblock
+    if (index > 14)
+    {
+        while (index < 16)
+        {
+            message[index++] = 0;
+        }
+
+        zen_sha1_process_block(ctx->hash_, message);
+        index = 0;
+    }
+
+    //è¡¥0
+    while (index < 14)
+    {
+        message[index++] = 0;
+    }
+
+    //ä¿å­˜é•¿åº¦ï¼Œæ³¨æ„æ˜¯bitä½çš„é•¿åº¦,è¿™ä¸ªé—®é¢˜è®©æˆ‘çœ‹ç€éƒé—·äº†åŠå¤©ï¼Œ
+    uint64_t data_len = (ctx->length_) << 3;
+
+    //æ³¨æ„SHA1ç®—æ³•è¦æ±‚çš„64bitçš„é•¿åº¦æ˜¯å¤§å¤´BIG-ENDIANï¼Œåœ¨å°å¤´çš„ä¸–ç•Œè¦è¿›è¡Œè½¬æ¢
+#if ZEN_BYTES_ORDER == ZEN_LITTLE_ENDIAN
+    data_len = ZEN_SWAP_UINT64(data_len);
+#endif
+
+    message[14] = (uint32_t) (data_len & 0x00000000FFFFFFFF);
+    message[15] = (uint32_t) ((data_len & 0xFFFFFFFF00000000ULL) >> 32);
+
+    zen_sha1_process_block(ctx->hash_, message);
+
+    //æ³¨æ„ç»“æœæ˜¯å¤§å¤´å…šçš„ï¼Œåœ¨å°å¤´çš„ä¸–ç•Œè¦è¿›è¡Œè½¬æ¢
+#if ZEN_BYTES_ORDER == ZEN_LITTLE_ENDIAN
+    swap_uint32_memcpy(result, &ctx->hash_, ZEN_SHA1_HASH_SIZE);
+#else
+    memcpy(result, &ctx->hash_, ZEN_SHA1_HASH_SIZE);
+#endif
+}
+
+
+
+//è®¡ç®—ä¸€ä¸ªå†…å­˜æ•°æ®çš„SHA1å€¼
+unsigned char *sha1(unsigned const  char *msg,
+                             size_t size,
+                             unsigned char result[ZEN_SHA1_HASH_SIZE])
+{
+    assert(result != NULL);
+
+    sha1_ctx ctx;
+    zen_sha1_init(&ctx);
+    zen_sha1_update(&ctx, msg, size);
+    zen_sha1_final(&ctx, msg, size, result);
+    return result;
+}

@@ -1,10 +1,11 @@
+/*
+ * This is a class which can contain object of any type
+ * It comes from boost Any. Then simplified it for types of Bencode.
+ * Refer to http://www.cnblogs.com/feixue/p/boost-any.html
+ */
 #include <assert.h>
 #include <typeinfo>
 #include <iostream>
-enum Type
-{
-	INT, STRING, LIST, DICT
-};
 class PlaceHolder {
 public:
   	virtual ~PlaceHolder() {}

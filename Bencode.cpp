@@ -4,6 +4,10 @@
 #include <vector>
 Any Bencode::load(std::string &str, std::string::iterator  &ci)
 {
+	//Integer type
+	//Warning, a c++ int type may not satisfy the size of Bencode integet so we use unsigned long long 
+	//All the integer type is considered to Unsigned long long
+	//Every load will go to next interator.
 	if (*ci == 'i')
 	{
 		auto start = ++ci;
@@ -48,6 +52,8 @@ Any Bencode::load(std::string &str, std::string::iterator  &ci)
 		return maa;
 		
 	}
+	else
+		assert(0);
 	
 		
 }

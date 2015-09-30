@@ -7,11 +7,13 @@ class Bencode
 {
 	
 public:
+	//internal object of Bencode
 	Any inter_obj;
 	Bencode(std::string r);
 	Bencode(Any &a):inter_obj(a) {}
+	//load from string to internal object
 	Any load(std::string &str, std::string::iterator  &ci);
+	//serilize the internal object to string
 	std::string dump();
-	//operator[](std::string s);
 
 };

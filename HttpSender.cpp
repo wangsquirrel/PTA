@@ -2,16 +2,9 @@
 #include "curl/curl.h"
 #include <string>
 
-HttpSender::HttpSender(void) : 
-m_bDebug(false)
-{
+HttpSender::HttpSender(void) : m_bDebug(false) {}
 
-}
-
-HttpSender::~HttpSender(void)
-{
-
-}
+HttpSender::~HttpSender(void) {}
 
 static int OnDebug(CURL *, curl_infotype itype, char * pData, size_t size, void *)
 {

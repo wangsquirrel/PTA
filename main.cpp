@@ -12,16 +12,19 @@
 
 int main(int argc, char** argv) {
 
-	Torrent t("1.torrent");
+	Torrent t("multi-files.torrent");
 
 	std::cout<<ToHexString(t.info_hash, 20, "")<<std::endl;;
 	std::cout<<t.length<<std::endl;
 	std::cout<<t.name<<std::endl;
-	//HttpSender hs;
-	//std::string result;
-	//std::string req_str;
-	/*
-	req_str = t.tracker + "&info_hash=" + ToHexString(t.info_hash, 20, "")  + "&peer_id=-UT2000-%1CD%E6%9B%E7%26%B02-%D5%CFz&port=11111&ipv6=i2001%3ada8%3a215%3a3f0%3a20c%3a29ff%3afee5%3a9276&uploaded=30000&downloaded=100000&left=0&numwant=0&compact=1&no_peer_id=1";
+	HttpSender hs;
+	std::string result;
+	std::string req_str;
+	
+	req_str = t.tracker + "&info_hash=" + ToHexString(t.info_hash, 20, "")  + "&peer_id=-UT2000-%1CD%E6%9B%E7%26%B02-%D5%CFz&port=11111&\
+	ipv6=i2001%3ada8%3a215%3a3f0%3a20c%3a29ff%3afee5%3a9276\
+	&uploaded=800000&downloaded=500000\
+	&left=0&numwant=0&compact=1&no_peer_id=1";
 
 	std::cout<<req_str<<std::endl;
 	std::vector<std::string> headers;
@@ -29,6 +32,5 @@ int main(int argc, char** argv) {
 	int r = hs.Gets(req_str ,headers, result);
 	std::cout << r;
 	std::cout << result;
-*/
 	return 0;
 }
