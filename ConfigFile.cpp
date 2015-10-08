@@ -34,10 +34,10 @@ bool ConfigFile::IsCommentChar(char c)
 {
     switch(c) {
         case COMMENT_CHAR:
-            return true;
+            return true;break;
         default:
             return false;
-                                        }
+    }
 }
 
 void ConfigFile::Trim(std::string & str)
@@ -76,7 +76,7 @@ bool ConfigFile::AnalyseLine(const std::string & line,std::string & key,std::str
         }
         end_pos = pos - 1;
     }
-   std::string new_line = line.substr(start_pos, start_pos + 1 - end_pos);  // 预处理，删除注释部分
+    std::string new_line = line.substr(start_pos, end_pos - start_pos + 1);  // 预处理，删除注释部分
     if ((pos = new_line.find('=')) == -1)
         return false;  // 没有=号                                 
     key = new_line.substr(0, pos);
@@ -90,10 +90,8 @@ bool ConfigFile::AnalyseLine(const std::string & line,std::string & key,std::str
 }
 void ConfigFile::PrintConfig()
 {
-    std:: map<std::string,std::string>::const_iterator mite = m.begin();
-    for (; mite != m.end(); ++mite) {
-        std::cout << mite->first << "=" << mite->second << std::endl;
+    for (auto mite : m) {
+        std::cout << mite.first << "=" << mite.second << std::endl;
     }
 }
 
-	

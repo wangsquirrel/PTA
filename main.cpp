@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     if (c.load())
         c.PrintConfig();
     else
-        std::cout<<"error";
+        std::cout<<"\nerror";
 
 
     /*
