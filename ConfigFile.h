@@ -12,6 +12,7 @@ public:
     void PrintConfig();
 
 private:
+    //An object to save configure items
     std::map<std::string, std::string> m;
     std::string file_name;
     bool IsSpace(char c);

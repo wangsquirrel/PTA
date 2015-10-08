@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     std::map<std::string, Any> qqq = any_cast<std::map<std::string, Any> >(b.inter_obj);
     std::map<std::string, Any> www = any_cast<std::map<std::string, Any> >(qqq["files"]);
     std::map<std::string, Any> rrr = any_cast<std::map<std::string, Any> >(www[ss]);
-    unsigned long long  eee = any_cast<unsigned long long>(rrr["complete"]);
+    unsigned long long  eee = any_cast<unsigned long long>(rrr["downloaded"]);
     std::cout << "complete: " << eee;
 	return 0;
 }
