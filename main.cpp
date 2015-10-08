@@ -1,7 +1,4 @@
 #include <iostream>
-#include <string>
-#include <map>
-#include <vector>
 #include <stdio.h>  
 
 #include "Bencode.h"
@@ -9,9 +6,18 @@
 #include "Torrent.h"
 #include "HttpSender.h"
 #include "utils.h"
+#include "ConfigFile.h"
 
 int main(int argc, char** argv) {
+    ConfigFile c("pta.conf");
 
+    if (c.load())
+        c.PrintConfig();
+    else
+        std::cout<<"error";
+
+
+    /*
 	Torrent t("multi-files.torrent");
 
 	std::cout<<ToHexString(t.info_hash, 20, "")<<std::endl;;
@@ -33,4 +39,5 @@ int main(int argc, char** argv) {
 	std::cout << r;
 	std::cout << result;
 	return 0;
+    */
 }
