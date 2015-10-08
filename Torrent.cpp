@@ -51,3 +51,12 @@ Torrent::Torrent(std::string file_name)
 	
 
 }
+bool Torrent::scrapable()
+{
+    int index;
+    index = tracker.find_last_of('/');
+    if (tracker.substr(index + 1, 8) == "announce")
+        return true;
+    else
+        return false;
+}

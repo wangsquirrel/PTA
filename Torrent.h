@@ -9,5 +9,6 @@ public:
 	unsigned long long length;
 	std::string tracker;
 	Torrent(std::string file_name);
+	bool scrapable();
 };
 
