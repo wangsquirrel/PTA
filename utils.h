@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <assert.h>
+#include <sstream>
 //used for url encode.Convert each char to visible Hexadecimal
 std::string ToHexString(const uint8_t* buf,int len,std::string tok);
 //scan the str for once and replace all old_value 
@@ -16,6 +17,15 @@ std::string UrlEncode(const std::string& str);
 std::string UrlEncode(unsigned char * t, int len);
 //decode url
 std::string UrlDecode(const std::string& str);
+template <class T>
+std::string integer2str(T t)
+{
+    std::stringstream ss;
+    ss << t;
+    return ss.str();
+}
+
+
 
 
 #endif
