@@ -3,6 +3,7 @@
 #include<memory>
 #include "Any.h"
 #include <sstream>
+#include "Logger.hpp"
 class Bencode
 {
 	

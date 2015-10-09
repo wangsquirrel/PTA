@@ -7,6 +7,7 @@
 #include "HttpSender.h"
 #include "utils.h"
 #include "ConfigFile.h"
+#include "Logger.hpp"
 
 int main(int argc, char** argv) {
     ConfigFile c("pta.conf");
@@ -35,12 +36,13 @@ int main(int argc, char** argv) {
     req_str = req_str + replace_all(t.tracker, "announce", "scrape") + "&info_hash=" + ToHexString(t.info_hash, 20, "");
 
 
-	std::cout<<req_str<<std::endl;
+	LogInfo("req_str : %s", req_str.c_str());
 	std::vector<std::string> headers;
 	headers.push_back("User-Agent: uTorrent/2000(18934)");
 	int r = hs.Gets(req_str ,headers, result);
 	//std::cout << r;
 	std::cout << result;
+
     Bencode b(result);
     std::string ss;
     char * sd = (char*)t.info_hash;
