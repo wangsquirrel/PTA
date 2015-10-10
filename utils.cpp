@@ -93,3 +93,23 @@ std::string UrlDecode(const std::string& str)
     return strTemp;
 }
 
+int read_dir(const char * dirname, std::vector<std::string> &vs)
+{
+    DIR *dir;
+    struct dirent *ptr;
+    struct stat st;
+    if ((dir = opendir(dirname)) == NULL)
+    {
+        LogError("Torrent dirctory does not exist");
+        return 1;
+    }
+    while((ptr = readdir(dir)) != NULL)
+    {
+        stat(ptr->d_name, &st);
+        if (!S_ISDIR(st.st_mode))
+            vs.push_back(std::string(ptr->d_name));
+    }
+    closedir(dir); 
+    return 0;
+}
+

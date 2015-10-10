@@ -1,13 +1,18 @@
 #ifndef UTILS_H
 #define UTILS_H
 #include <string>
+#include <vector>
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
 #include <stdio.h>
 #include <memory.h>
 #include <assert.h>
 #include <sstream>
+#include <unistd.h>
+#include <dirent.h>
+#include <string.h>
+#include <sys/stat.h>
+#include "Logger.hpp"
 //used for url encode.Convert each char to visible Hexadecimal
 std::string ToHexString(const uint8_t* buf,int len,std::string tok);
 //scan the str for once and replace all old_value 
@@ -24,6 +29,7 @@ std::string integer2str(T t)
     ss << t;
     return ss.str();
 }
+int read_dir(const char * dirname, std::vector<std::string> &vs);
 
 
 

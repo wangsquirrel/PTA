@@ -6,7 +6,8 @@
 #include <iomanip>
 #include <stdlib.h>
 
-Torrent::Torrent(std::string file_name)
+Torrent::Torrent(std::string file_name) : total_upload(0), total_download(0),
+                                          event("started")
 {
 	//load torrent from a file
 	std::ifstream in(file_name.c_str());
