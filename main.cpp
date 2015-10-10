@@ -57,7 +57,7 @@ ipv6=i2001%3ada8%3a215%3a3f0%3a20c%3a29ff%3afee5%3a9276\
     result = UrlEncode(result);
 	LogInfo("resp: %s", result.c_str());
     t.total_upload += 6000000;
-    t.total_download += 3000000;
+    //t.total_download += 3000000;
     result.clear();
     }
     LogInfo("sleep 60s...\n");

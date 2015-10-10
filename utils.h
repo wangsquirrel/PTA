@@ -29,6 +29,8 @@ std::string integer2str(T t)
     ss << t;
     return ss.str();
 }
+
+//read torrent file name from directory and store in vs
 int read_dir(const char * dirname, std::vector<std::string> &vs);
 
 

@@ -107,7 +107,8 @@ int read_dir(const char * dirname, std::vector<std::string> &vs)
     {
         stat(ptr->d_name, &st);
         if (!S_ISDIR(st.st_mode))
-            vs.push_back(std::string(ptr->d_name));
+            if (std::string(ptr->d_name).find(".torrent") != std::string::npos)
+                vs.push_back(std::string(ptr->d_name));
     }
     closedir(dir); 
     return 0;
