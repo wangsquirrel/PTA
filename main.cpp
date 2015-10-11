@@ -21,6 +21,13 @@ int main(int argc, char** argv) {
         
     //ConfigFile c("pta.conf");
     //if (c.load())   c.PrintConfig();
+	HttpSender hs;
+	std::vector<std::string> headers;
+	headers.push_back("User-Agent: uTorrent/2000(18934)");
+	std::string result;
+	std::string req_str;
+    result.clear();
+    req_str.clear();
     for (auto t : torrent_list)
     {
 
@@ -30,11 +37,6 @@ int main(int argc, char** argv) {
 	LogInfo("scrapble : %s", (t.scrapable() ? "yes":"no"));
     }
 
-	HttpSender hs;
-	std::vector<std::string> headers;
-	headers.push_back("User-Agent: uTorrent/2000(18934)");
-	std::string result;
-	std::string req_str;
     
     while (true)
     {
