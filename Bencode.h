@@ -4,6 +4,9 @@
 #include "Any.h"
 #include <sstream>
 #include "Logger.hpp"
+
+#ifndef BENCODE_H
+#define BENCODE_H
 class Bencode
 {
 	
@@ -18,3 +21,5 @@ public:
 	std::string dump();
 
 };
+
+#endif

@@ -6,6 +6,9 @@
 #include <assert.h>
 #include <typeinfo>
 #include <iostream>
+
+#ifndef ANY_H
+#define ANY_H
 class PlaceHolder {
 public:
   	virtual ~PlaceHolder() {}
@@ -67,3 +70,5 @@ ValueType any_cast(const Any& operand)
    	assert( operand.type() == typeid(ValueType) ); 
 	return static_cast< Holder<ValueType> * >(operand.content_)->held_;   
 }
+
+#endif

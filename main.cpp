@@ -10,8 +10,12 @@
 #include "utils.h"
 #include "ConfigFile.h"
 #include "Logger.hpp"
+#include "TorrentController.h"
 
 int main(int argc, char** argv) {
+
+    TorrentController tc;
+
     std::vector<std::string> filenames;
     std::string torrent_dir = "./torrents/";
     read_dir(torrent_dir.c_str(), filenames);
@@ -21,13 +25,6 @@ int main(int argc, char** argv) {
         
     //ConfigFile c("pta.conf");
     //if (c.load())   c.PrintConfig();
-	HttpSender hs;
-	std::vector<std::string> headers;
-	headers.push_back("User-Agent: uTorrent/2000(18934)");
-	std::string result;
-	std::string req_str;
-    result.clear();
-    req_str.clear();
     for (auto t : torrent_list)
     {
 
@@ -43,24 +40,17 @@ int main(int argc, char** argv) {
 
     for (auto &t : torrent_list)
     {
+        std::string result;
 	
-	    req_str = t.tracker + "&info_hash=" + UrlEncode(t.info_hash, 20)  + "&peer_id=-UT2000-%1CD%E6%9B%E7%26%B02-%D5%CFz&port=11111&\
-ipv6=i2001%3ada8%3a215%3a3f0%3a20c%3a29ff%3afee5%3a9276\
-&uploaded=" + integer2str(t.total_upload) + "&downloaded=" + integer2str(t.total_download) + \
-"&left=0&numwant=0&compact=1&no_peer_id=1";
-//&event=started";
+        tc.commit(t, result);
+        tc.update_torrent(t, result);
+        std::cout<<"~~~"<<t.interval<<"\n";
+        std::cout<<"~~~"<<t.min_interval<<"\n";
+        std::cout<<"~~~"<<t.complete<<"\n";
+        std::cout<<"~~~"<<t.incomplete<<"\n";
+        result.clear();
 
     //req_str = req_str + replace_all(t.tracker, "announce", "scrape") + "&info_hash=" + UrlEncode(t.info_hash, 20);
-
-	LogInfo("req_str : %s", req_str.c_str());
-	int resp_code = hs.Gets(req_str ,headers, result);
-	LogInfo("curl response code: %d", resp_code);
-	//std::cout << r;
-    result = UrlEncode(result);
-	LogInfo("resp: %s", result.c_str());
-    t.total_upload += 6000000;
-    //t.total_download += 3000000;
-    result.clear();
     }
     LogInfo("sleep 60s...\n");
     sleep(60);
