@@ -20,6 +20,9 @@ int TorrentController::update_torrent(Torrent &t, std::string &resp_str)
     t.min_interval = any_cast<unsigned long long>(msa["min interval"]);
     t.complete = any_cast<unsigned long long>(msa["complete"]);
     t.incomplete = any_cast<unsigned long long>(msa["incomplete"]);
+	t.last_commit = time(NULL);
+	t.event = "noevent";
+	LogInfo("last commit : %d", t.last_commit);
     return 0;
 }
 
@@ -54,8 +57,12 @@ void TorrentController::run()
     {
         for (auto &t : torrent_list)
         {
+			//std::cout<<"qweqweqweqwe\n";
+			printf("aaaaaa %lf\n",difftime(time(NULL), t.last_commit));
+			if (difftime(time(NULL), t.last_commit) < t.min_interval * 10)
+			    continue;
             std::string result;
-	
+			t.total_upload += 600000 * t.min_interval;
             commit(t, result);
             update_torrent(t, result);
             std::cout<<"~~~"<<t.interval<<"\n";
@@ -65,7 +72,7 @@ void TorrentController::run()
             result.clear();
         }
         LogInfo("sleep 60s...\n");
-        sleep(60);
+        sleep(6);
     
     }
 }
