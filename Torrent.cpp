@@ -7,7 +7,8 @@
 #include <stdlib.h>
 
 Torrent::Torrent(std::string file_name) : total_upload(0), total_download(0),
-                                          event("started")
+                                          event("started"), interval(60), min_interval(60),
+                                          complete(0), incomplete(0)
 {
 	//load torrent from a file
 	std::ifstream in(file_name.c_str());
@@ -61,3 +62,13 @@ bool Torrent::scrapable()
     else
         return false;
 }
+std::string Torrent::make_req_str()
+{
+    std::string req_string;
+    req_string = tracker + "&info_hash=" + UrlEncode(info_hash, 20)  + "&peer_id=-UT2000-%1CD%E6%9B%E7%26%B02-%D5%CFz&port=11111&" + 
+                "ipv6=i2001%3ada8%3a215%3a3f0%3a20c%3a29ff%3afee5%3a9276" + 
+                "&uploaded=" + integer2str(total_upload) + "&downloaded=" + integer2str(total_download) + 
+                "&left=0&numwant=0&compact=1&no_peer_id=1";
+    return req_string;
+}
+
