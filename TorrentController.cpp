@@ -57,7 +57,6 @@ void TorrentController::run()
     {
         for (auto &t : torrent_list)
         {
-			//std::cout<<"qweqweqweqwe\n";
 			printf("aaaaaa %lf\n",difftime(time(NULL), t.last_commit));
 			if (difftime(time(NULL), t.last_commit) < t.min_interval * 10)
 			    continue;

@@ -11,14 +11,22 @@
 #include "ConfigFile.h"
 #include "Logger.hpp"
 #include "TorrentController.h"
+#include "TokenBucket.h"
 
 int main(int argc, char** argv) {
 
-    TorrentController tc;
+    //TorrentController tc;
+    TokenBucket tb(400000000000, 50000000000);
+    while (1)
+    {
+    std::cout << "get "<<tb.get_token(50000000000);
+    std::cout<< " token "<<tb.tokens<<std::endl;
+    sleep(3);
+    }
 
     //ConfigFile c("pta.conf");
     //if (c.load())   c.PrintConfig();
-    tc.run();    
+    //tc.run();    
 
 #ifdef SCRAPE
     //req_str = req_str + replace_all(t.tracker, "announce", "scrape") + "&info_hash=" + UrlEncode(t.info_hash, 20);
