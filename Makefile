@@ -1,6 +1,6 @@
 BIN  := main
 SRCS := $(wildcard *.cpp)
-CPPFLAGS := -Wall -std=c++11 
+CPPFLAGS := -g -Wall -std=c++11 
 OBJS := $(SRCS:%.cpp=%.o)
 LIBS := -lcurl
 LDFLAGS :=

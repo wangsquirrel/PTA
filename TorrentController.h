@@ -4,6 +4,7 @@
 #include "Logger.hpp"
 #include "Bencode.h"
 #include "Any.h"
+#include "TokenBucket.h"
 class TorrentController
 {
 public:
@@ -11,6 +12,7 @@ public:
     std::vector<Torrent> torrent_list;
     HttpSender hs;
 	std::vector<std::string> headers;
+    TokenBucket tb;
     //commit http request and restore response in resp_str
     int commit(Torrent &t, std::string& resp_str);
     //update the information of a torrent according to its response

@@ -30,6 +30,7 @@ Any Bencode::load(std::string &str, std::string::iterator  &ci)
 		unsigned long long len = strtoull(ss.c_str(), NULL, 10);
 		++ci;// skip ':'
 		ci += len;
+
 		return Any(std::string(ci - len, ci));
 	}
 	
@@ -62,6 +63,9 @@ Any Bencode::load(std::string &str, std::string::iterator  &ci)
         LogError("Bencode string is not well formated");
         return Any();
     }
+
+
+
 	
 		
 }
@@ -123,4 +127,20 @@ std::string Bencode::dump()
 	}
 	else
 		assert(0);
+}
+int Bencode::is_fail()
+{
+    if (inter_obj.type().name() == typeid(std::map<std::string, Any>).name())
+    {
+        std::map<std::string, Any> msa = any_cast<std::map<std::string, Any> >(inter_obj);
+        if (msa.find("failure reason") != msa.end())
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+int Bencode::is_empty()
+{
+    return inter_obj.is_empty();
 }

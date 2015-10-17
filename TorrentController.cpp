@@ -15,6 +15,14 @@ int TorrentController::commit(Torrent &t, std::string &resp_str)
 int TorrentController::update_torrent(Torrent &t, std::string &resp_str)
 {
     Bencode b(resp_str);
+    if (b.is_empty())
+        return 1;
+    if (b.is_fail())
+    {
+        LogError("get -=fail reason=- error");
+        return 1;
+    }
+    std::cout<<"~~~~~~~~~"<<std::endl;
     std::map<std::string, Any> msa = any_cast<std::map<std::string, Any> >(b.inter_obj);
     t.interval = any_cast<unsigned long long>(msa["interval"]);
     t.min_interval = any_cast<unsigned long long>(msa["min interval"]);
@@ -26,7 +34,7 @@ int TorrentController::update_torrent(Torrent &t, std::string &resp_str)
     return 0;
 }
 
-TorrentController::TorrentController()
+TorrentController::TorrentController() : tb(12 * 3 * 1000 * 1000, 3 * 1000 * 10000)
 {
     headers.push_back("User-Agent: uTorrent/2000(18934)");
 }
@@ -58,10 +66,13 @@ void TorrentController::run()
         for (auto &t : torrent_list)
         {
 			printf("aaaaaa %lf\n",difftime(time(NULL), t.last_commit));
-			if (difftime(time(NULL), t.last_commit) < t.min_interval * 10)
+			if (difftime(time(NULL), t.last_commit) < 9)
 			    continue;
             std::string result;
-			t.total_upload += 600000 * t.min_interval;
+            unsigned long long the = tb.get_token(6000000 * 10);
+            std::cout << "this time : "<<the<<std::endl;
+            std::cout << "tokens : "<<tb.tokens<<std::endl;
+			t.total_upload += the;
             commit(t, result);
             update_torrent(t, result);
             std::cout<<"~~~"<<t.interval<<"\n";
@@ -71,7 +82,7 @@ void TorrentController::run()
             result.clear();
         }
         LogInfo("sleep 60s...\n");
-        sleep(6);
+        sleep(10);
     
     }
 }

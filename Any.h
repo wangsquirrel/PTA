@@ -44,6 +44,10 @@ public:
         std::swap(content_, rhs.content_);
         return *this;
 	} 
+    int is_empty()
+    {
+        return content_ == NULL;
+    }
   	Any & operator=(const Any & rhs)
     {
         Any(rhs).swap(*this);
@@ -64,6 +68,8 @@ private:
   		PlaceHolder* content_;
   		
 };
+
+
 template<typename ValueType>   
 ValueType any_cast(const Any& operand)  
 {

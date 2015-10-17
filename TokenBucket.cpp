@@ -38,7 +38,8 @@ unsigned long long TokenBucket::get_token(unsigned long long want)
     // This RAN_MAX is 2147516416 
     // !!!!!!! Maybe not inappropriate ~~~100000~~~
     // to be rewrite
-    unsigned long long r = rand() * 100000 % want;
+    std::cout << want<<std::endl;
+    unsigned long long r = (rand() * 100000) % want;
 
     if (r > tokens)
     {

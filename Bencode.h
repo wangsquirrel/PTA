@@ -19,6 +19,8 @@ public:
 	Any load(std::string &str, std::string::iterator  &ci);
 	//serilize the internal object to string
 	std::string dump();
+    int is_fail();
+    int is_empty();
 
 };
 
