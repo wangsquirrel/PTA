@@ -2,13 +2,14 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <string>
 #define COMMENT_CHAR '#'
 class ConfigFile
 {
 public:
     ConfigFile(std::string fname) : file_name(fname) {}
     bool load();
-    std::map<std::string, std::string> get() { return m; }
+    std::string get(std::string first) { return m[first]; }
     void PrintConfig();
 
 private:

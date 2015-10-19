@@ -34,7 +34,7 @@ int TorrentController::update_torrent(Torrent &t, std::string &resp_str)
     return 0;
 }
 
-TorrentController::TorrentController() : tb(12 * 3 * 1000 * 1000, 3 * 1000 * 10000)
+TorrentController::TorrentController() : tb( 2700 * 10 * global.total_speed, global.total_speed)
 {
     headers.push_back("User-Agent: uTorrent/2000(18934)");
 }
@@ -60,29 +60,35 @@ int TorrentController::get_torrents()
 
 void TorrentController::run()
 {
+    //r will be used
     int r = get_torrents();
     while (true)
     {
+        //shuffle to be added
         for (auto &t : torrent_list)
         {
-			printf("aaaaaa %lf\n",difftime(time(NULL), t.last_commit));
-			if (difftime(time(NULL), t.last_commit) < 9)
+			printf("seconds until last commit :%ds...\n",int(difftime(time(NULL), t.last_commit)));
+			if (difftime(time(NULL), t.last_commit) < t.interval)
+            {
+                std::cout<<"too soon try after 60s"<<std::endl;
 			    continue;
+            }
             std::string result;
-            unsigned long long the = tb.get_token(6000000 * 10);
-            std::cout << "this time : "<<the<<std::endl;
-            std::cout << "tokens : "<<tb.tokens<<std::endl;
+            //when first time the token we want will be huge because last_time was init 0
+            //it will be fine because of tokenbucket is init 0 and event:started's upload bytes will not be care
+            //can be fix last_time init by time(NULL)
+            unsigned long long the = tb.get_token(global.torrent_speed * 2 * int(difftime(time(NULL), t.last_commit)));
+            std::cout << "this time : "<<the / 1000000<<"M"<<std::endl;
+            std::cout << "tokens : "<<tb.tokens / 1000000<<"M"<<std::endl;
 			t.total_upload += the;
             commit(t, result);
             update_torrent(t, result);
             std::cout<<"~~~"<<t.interval<<"\n";
             std::cout<<"~~~"<<t.min_interval<<"\n";
-            std::cout<<"~~~"<<t.complete<<"\n";
-            std::cout<<"~~~"<<t.incomplete<<"\n";
             result.clear();
         }
         LogInfo("sleep 60s...\n");
-        sleep(10);
+        sleep(60);
     
     }
 }

@@ -5,6 +5,10 @@
 #include "Bencode.h"
 #include "Any.h"
 #include "TokenBucket.h"
+#include "Global.h"
+
+//global configure
+extern Global global;
 class TorrentController
 {
 public:

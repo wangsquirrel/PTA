@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 Torrent::Torrent(std::string file_name) : total_upload(0), total_download(0),
-                                          event("started"), interval(0), min_interval(0),
+                                          event("started"), interval(30), min_interval(30),
                                           complete(0), incomplete(0), last_commit(0)
 {
 	//load torrent from a file
