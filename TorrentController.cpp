@@ -67,10 +67,10 @@ void TorrentController::run()
         //shuffle to be added
         for (auto &t : torrent_list)
         {
-			printf("seconds until last commit :%ds...\n",int(difftime(time(NULL), t.last_commit)));
+			printf("Seconds until last commit :%ds...\n",int(difftime(time(NULL), t.last_commit)));
 			if (difftime(time(NULL), t.last_commit) < t.interval)
             {
-                std::cout<<"too soon try after 60s"<<std::endl;
+                std::cout<<"Too soon try after 60s"<<std::endl;
 			    continue;
             }
             std::string result;
