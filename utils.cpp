@@ -114,3 +114,39 @@ int read_dir(const char * dirname, std::vector<std::string> &vs)
     return 0;
 }
 
+std::string human_size(unsigned long long size)
+{
+    char *result = (char *) malloc(sizeof(char) * 20);
+    static int GB = 1024 * 1024 * 1024;
+    static int MB = 1024 * 1024;
+    static int KB = 1024;
+    if (size >= GB) {
+      if (size % GB == 0)
+        sprintf(result, "%d GB", size / GB);
+      else
+        sprintf(result, "%.1f GB", (float) size / GB);
+    }
+    else if (size >= MB) {
+      if (size % MB == 0)
+        sprintf(result, "%d MB", size / MB);
+      else
+        sprintf(result, "%.1f MB", (float) size / MB);
+    }
+    else {
+      if (size == 0) {
+        result[0] = '0';
+        result[1] = '\0';
+      }
+      else {
+        if (size % KB == 0)
+          sprintf(result, "%d KB", size / KB);
+        else
+          sprintf(result, "%.1f KB", (float) size / KB);
+      }
+    }
+    std::string r(result);
+    free(result);
+  
+    return r;
+}
+  

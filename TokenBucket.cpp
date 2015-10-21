@@ -39,7 +39,10 @@ unsigned long long TokenBucket::get_token(unsigned long long want)
     // !!!!!!! Maybe not inappropriate ~~~100000~~~
     // to be rewrite
     std::cout << "this torrent want  "<<want<<std::endl;
-    unsigned long long r = (rand() * 100000) % want;
+
+    //try to avoid get toke token too less because of random
+    unsigned long long r = ((rand() * 100000) % (want * 3 / 10)) + (want * 7 / 10);
+
 
     if (r > tokens)
     {

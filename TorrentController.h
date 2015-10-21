@@ -24,4 +24,6 @@ public:
     TorrentController();
     int get_torrents();
     void run();
+
+    void stop();
 };

@@ -5,6 +5,7 @@ struct Global
 
     unsigned long long total_speed;
     unsigned long long torrent_speed;
+    bool running = 1;
 };
 
 #endif

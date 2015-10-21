@@ -22,7 +22,6 @@ int TorrentController::update_torrent(Torrent &t, std::string &resp_str)
         LogError("get -=fail reason=- error");
         return 1;
     }
-    std::cout<<"~~~~~~~~~"<<std::endl;
     std::map<std::string, Any> msa = any_cast<std::map<std::string, Any> >(b.inter_obj);
     t.interval = any_cast<unsigned long long>(msa["interval"]);
     t.min_interval = any_cast<unsigned long long>(msa["min interval"]);
@@ -30,11 +29,12 @@ int TorrentController::update_torrent(Torrent &t, std::string &resp_str)
     t.incomplete = any_cast<unsigned long long>(msa["incomplete"]);
 	t.last_commit = time(NULL);
 	t.event = "noevent";
-	LogInfo("last commit : %d", t.last_commit);
     return 0;
 }
 
-TorrentController::TorrentController() : tb( 2700 * 10 * global.total_speed, global.total_speed)
+// normal interval is 2700, so we use 3000
+// it may be not regorous!!!
+TorrentController::TorrentController() : tb( 3000 * global.total_speed, global.total_speed)
 {
     headers.push_back("User-Agent: uTorrent/2000(18934)");
 }
@@ -51,7 +51,7 @@ int TorrentController::get_torrents()
     {
 
     	LogInfo("info hash: %s", UrlEncode(t.info_hash, 20).c_str());
-	    LogInfo("file length: %llu", t.length);
+	    LogInfo("file length: %s", human_size(t.length).c_str());
 	    LogInfo("file  name : %s", t.name.c_str());
 	    LogInfo("scrapble : %s", (t.scrapable() ? "yes":"no"));
     }
@@ -60,14 +60,21 @@ int TorrentController::get_torrents()
 
 void TorrentController::run()
 {
-    //r will be used
     int r = get_torrents();
+    if (r != 0)
+    {
+        LogInfo("Torrent directory open failed");
+    }
     while (true)
     {
         //shuffle to be added
         for (auto &t : torrent_list)
         {
 			printf("seconds until last commit :%ds...\n",int(difftime(time(NULL), t.last_commit)));
+            if (!global.running)
+            {
+                stop();
+            }
 			if (difftime(time(NULL), t.last_commit) < t.interval)
             {
                 std::cout<<"too soon try after 60s"<<std::endl;
@@ -78,17 +85,27 @@ void TorrentController::run()
             //it will be fine because of tokenbucket is init 0 and event:started's upload bytes will not be care
             //can be fix last_time init by time(NULL)
             unsigned long long the = tb.get_token(global.torrent_speed * 2 * int(difftime(time(NULL), t.last_commit)));
-            std::cout << "this time : "<<the / 1000000<<"M"<<std::endl;
-            std::cout << "tokens : "<<tb.tokens / 1000000<<"M"<<std::endl;
+            std::cout << "get this time : "<<human_size(the)<<std::endl;
+            std::cout << "left tokens : "<<human_size(tb.tokens)<<std::endl;
 			t.total_upload += the;
             commit(t, result);
             update_torrent(t, result);
-            std::cout<<"~~~"<<t.interval<<"\n";
-            std::cout<<"~~~"<<t.min_interval<<"\n";
             result.clear();
         }
         LogInfo("sleep 60s...\n");
         sleep(60);
     
     }
+}
+void TorrentController::stop()
+{
+   for (auto &t : torrent_list)
+   {
+       std::string result;
+       t.event="stopped";
+       commit(t, result);
+       LogInfo("Stop response : %s", result.c_str());
+   }
+   LogInfo("The program is stopped gracefully~~~");
+   exit(0);
 }
