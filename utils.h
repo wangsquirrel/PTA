@@ -32,6 +32,7 @@ std::string integer2str(T t)
 
 //read torrent file name from directory and store in vs
 int read_dir(const char * dirname, std::vector<std::string> &vs);
+std::string human_size(unsigned long long size);
 
 
 

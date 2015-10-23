@@ -20,7 +20,7 @@ Torrent::Torrent(std::string file_name) : total_upload(0), total_download(0),
 
 	//extarct tracker
 	tracker = any_cast<std::string>(msa["announce"]);
-	std::cout<<tracker<<std::endl;
+	//std::cout<<tracker<<std::endl;
 
 	// extract info and calc info_hash
 	Bencode info_Bencode(msa["info"]);
@@ -71,4 +71,28 @@ std::string Torrent::make_req_str()
                 "&left=0&numwant=0&compact=1&no_peer_id=1" + (event=="noevent" ? "" : "&event=" + event);
     return req_string; 
 }
+std::string Torrent::make_scrape_req_string()
+{    
+    std::string req_string;
+    req_string = req_string + replace_all(tracker, "announce", "scrape") + "&info_hash=" + UrlEncode(info_hash, 20);
+    return req_string;
+}
+/*
+ * this is a test for scrape, now we dont need this feature
+ *
+ *
+    //req_str = req_str + replace_all(t.tracker, "announce", "scrape") + "&info_hash=" + UrlEncode(t.info_hash, 20);
+    Bencode b(result);
+    std::map<std::string, Any> qqq = any_cast<std::map<std::string, Any> >(b.inter_obj);
+    std::map<std::string, Any> www = any_cast<std::map<std::string, Any> >(qqq["files"]);
+    std::map<std::string, Any> rrr = any_cast<std::map<std::string, Any> >(www[ss]);
+    unsigned long long  eee = any_cast<unsigned long long>(rrr["downloaded"]);
+    std::cout << "complete: " << eee;
 
+
+*/
+
+bool Torrent::operator==(const Torrent &t) const
+{
+    return memcmp(info_hash, t.info_hash, 20) == 0;
+}

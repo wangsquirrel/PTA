@@ -1,10 +1,14 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
-struct Global
+#include <string>
+class Global
 {
-
-    unsigned long long total_speed;
-    unsigned long long torrent_speed;
+public:
+    static unsigned long long total_speed;
+    static unsigned long long torrent_speed;
+    static unsigned long long sleep_time;
+    static bool allow_running ;
+    static std::string torrent_dir;
 };
 
 #endif
