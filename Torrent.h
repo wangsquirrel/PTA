@@ -26,6 +26,7 @@ public:
 	bool scrapable();
     std::string make_req_str();
     std::string make_scrape_req_string();
+    bool operator==(const Torrent &t) const;
 };
 
 

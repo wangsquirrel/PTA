@@ -107,8 +107,13 @@ int read_dir(const char * dirname, std::vector<std::string> &vs)
     {
         stat(ptr->d_name, &st);
         if (!S_ISDIR(st.st_mode))
+        {
+                LogInfo("%s", ptr->d_name);
             if (std::string(ptr->d_name).find(".torrent") != std::string::npos)
+            {
                 vs.push_back(std::string(ptr->d_name));
+            }
+        }
     }
     closedir(dir); 
     return 0;
@@ -117,18 +122,18 @@ int read_dir(const char * dirname, std::vector<std::string> &vs)
 std::string human_size(unsigned long long size)
 {
     char *result = (char *) malloc(sizeof(char) * 20);
-    static int GB = 1024 * 1024 * 1024;
-    static int MB = 1024 * 1024;
-    static int KB = 1024;
+    static unsigned long long  GB = 1024 * 1024 * 1024;
+    static unsigned long long  MB = 1024 * 1024;
+    static unsigned long long  KB = 1024;
     if (size >= GB) {
       if (size % GB == 0)
-        sprintf(result, "%d GB", size / GB);
+        sprintf(result, "%lld GB", size / GB);
       else
         sprintf(result, "%.1f GB", (float) size / GB);
     }
     else if (size >= MB) {
       if (size % MB == 0)
-        sprintf(result, "%d MB", size / MB);
+        sprintf(result, "%lld MB", size / MB);
       else
         sprintf(result, "%.1f MB", (float) size / MB);
     }
@@ -139,7 +144,7 @@ std::string human_size(unsigned long long size)
       }
       else {
         if (size % KB == 0)
-          sprintf(result, "%d KB", size / KB);
+          sprintf(result, "%lld KB", size / KB);
         else
           sprintf(result, "%.1f KB", (float) size / KB);
       }

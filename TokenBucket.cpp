@@ -41,7 +41,8 @@ unsigned long long TokenBucket::get_token(unsigned long long want)
     std::cout << "this torrent want  "<<want<<std::endl;
 
     //try to avoid get toke token too less because of random
-    unsigned long long r = ((rand() * 100000) % (want * 3 / 10)) + (want * 7 / 10);
+    //random from 80% to 120%
+    unsigned long long r = ((rand() * 100000) % (want * 2 / 5)) + (want * 4 / 5);
 
 
     if (r > tokens)

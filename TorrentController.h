@@ -6,9 +6,9 @@
 #include "Any.h"
 #include "TokenBucket.h"
 #include "Global.h"
+#include <algorithm>
 
 //global configure
-extern Global global;
 class TorrentController
 {
 public:

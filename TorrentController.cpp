@@ -16,7 +16,10 @@ int TorrentController::update_torrent(Torrent &t, std::string &resp_str)
 {
     Bencode b(resp_str);
     if (b.is_empty())
+    {
+        LogWarn("get empty response");
         return 1;
+    }
     if (b.is_fail())
     {
         LogError("get -=fail reason=- error");
@@ -34,19 +37,45 @@ int TorrentController::update_torrent(Torrent &t, std::string &resp_str)
 
 // normal interval is 2700, so we use 3000
 // it may be not regorous!!!
-TorrentController::TorrentController() : tb( 3000 * global.total_speed, global.total_speed)
+TorrentController::TorrentController() : tb( 3000 * Global::total_speed, Global::total_speed)
 {
     headers.push_back("User-Agent: uTorrent/2000(18934)");
+    /*
+    headers.push_back("User-Agent: uTorrent/2000(18934)");
+    headers.push_back("User-Agent: uTorrent/2000(18934)");
+    headers.push_back("User-Agent: uTorrent/2000(18934)");
+    headers.push_back("User-Agent: uTorrent/2000(18934)");
+    headers.push_back("User-Agent: uTorrent/2000(18934)");
+    */
 }
 int TorrentController::get_torrents()
 {
     std::vector<std::string> filenames;
-    std::string torrent_dir = "./torrents/";
+    std::string torrent_dir = Global::torrent_dir;
     int c = read_dir(torrent_dir.c_str(), filenames);
     if (c != 0)
         return 1;
+    LogInfo("Threre are %d  torrent files", filenames.size());
+
+    //try to avoid duplicated torrents of different names and the same name
     for (auto i : filenames)
-        torrent_list.push_back(Torrent(torrent_dir + i));
+    {
+        bool dup = false;
+        Torrent tmp = Torrent(torrent_dir + i);
+        for (auto t : torrent_list)
+        {
+            if (t == tmp)
+            {
+                dup = true;
+                break;
+            }
+        }
+        if (dup)
+            continue;
+        torrent_list.push_back(tmp);
+    }
+
+    LogInfo("Threre are %d valid torrents", torrent_list.size());
     for (auto t : torrent_list)
     {
 
@@ -67,24 +96,27 @@ void TorrentController::run()
     }
     while (true)
     {
-        //shuffle to be added
-        for (auto &t : torrent_list)
-        {
-			printf("seconds until last commit :%ds...\n",int(difftime(time(NULL), t.last_commit)));
-            if (!global.running)
+
+        if (!Global::allow_running)
             {
                 stop();
             }
+		
+        //shuffle to avoid that last few torrents always gets less or no token
+        // !! but this strategy my reflact obtusely because interval may be 2700s
+        random_shuffle(torrent_list.begin(), torrent_list.end());
+        for (auto &t : torrent_list)
+        {
+		    LogInfo("%s since last commit:%ds...", t.name.c_str(), int(difftime(time(NULL), t.last_commit)));
 			if (difftime(time(NULL), t.last_commit) < t.interval)
             {
-                std::cout<<"too soon try after 60s"<<std::endl;
 			    continue;
             }
             std::string result;
             //when first time the token we want will be huge because last_time was init 0
             //it will be fine because of tokenbucket is init 0 and event:started's upload bytes will not be care
             //can be fix last_time init by time(NULL)
-            unsigned long long the = tb.get_token(global.torrent_speed * 2 * int(difftime(time(NULL), t.last_commit)));
+            unsigned long long the = tb.get_token(Global::torrent_speed * int(difftime(time(NULL), t.last_commit)));
             std::cout << "get this time : "<<human_size(the)<<std::endl;
             std::cout << "left tokens : "<<human_size(tb.tokens)<<std::endl;
 			t.total_upload += the;
@@ -92,8 +124,8 @@ void TorrentController::run()
             update_torrent(t, result);
             result.clear();
         }
-        LogInfo("sleep 60s...\n");
-        sleep(60);
+        LogInfo("sleep %llds...\n", Global::sleep_time);
+        sleep(Global::sleep_time);
     
     }
 }

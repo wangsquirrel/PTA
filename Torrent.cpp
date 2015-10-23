@@ -92,3 +92,7 @@ std::string Torrent::make_scrape_req_string()
 
 */
 
+bool Torrent::operator==(const Torrent &t) const
+{
+    return memcmp(info_hash, t.info_hash, 20) == 0;
+}
