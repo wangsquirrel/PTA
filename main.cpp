@@ -1,37 +1,39 @@
-#include <iostream>
-#include <stdio.h>  
-#include <time.h>
-#include <unistd.h>
-#include <signal.h>
-
-#include "Bencode.h"
-#include "sha1.h"
-#include "Torrent.h"
 #include "HttpSender.h"
-#include "utils.h"
-#include "ConfigFile.h"
-#include "Logger.hpp"
-#include "TorrentController.h"
-#include "Global.h"
 
-void stop(int signo)
+#include<string>
+#include<iostream>
+#include<vector>
+#include <xpath_static.h>
+#include <htmlutil.h>
+#include<fstream>
+using namespace std;
+using namespace TinyXPath;
+
+int main()
 {
-    Global::allow_running = false;
+	HttpSender hs;
+	vector<string> headers;
+	string resp;
+	ofstream of("test.txt", ios::out);
+	int code = hs.Get("http://www.baidu.com", headers, resp);
+
+
+	cout << resp;
+	of << resp;
+	of.close();
+    TiXmlDocument *myDocument = new TiXmlDocument("test.txt");
+    myDocument->LoadFile();
+     //获得根元素，即definitions。
+    TiXmlElement *RootElement = myDocument->RootElement();
+/*
+    int types_num = i_xpath_int(RootElement,"count(//a)");//types元素个数。
+    std::cout<<types_num<<std::endl;
+    string oper_name = XAp_xpath_attribute(RootElement,"/a/x/@target")->Value();
+    cout<<oper_name<<endl;
+*/
+    string a;
+    cout<<a.assign(S_xpath_string (RootElement, "//title/text()").c_str());
+
+
 }
-int main(int argc, char** argv) {
 
-    ConfigFile c("pta.conf");
-    if (c.load())   
-        //c.PrintConfig();
-    Global::total_speed = strtoull(c.get("total_speed").c_str(), NULL, 10);
-    Global::torrent_speed = strtoull(c.get("torrent_speed").c_str(), NULL, 10);
-    Global::sleep_time = strtoull(c.get("sleep_time").c_str(), NULL, 10);
-    Global::torrent_dir = c.get("torrent_dir");
-    LogInfo("%s", Global::torrent_dir.c_str());
-
-    TorrentController tc;
-    signal(SIGINT, stop);
-    tc.run();    
-
-	return 0;
-}
