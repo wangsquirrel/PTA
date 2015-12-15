@@ -7,6 +7,9 @@ import logging
 import codecs
 from lxml import etree
 from BeautifulSoup import BeautifulSoup
+from configobj import ConfigObj  
+CONFIG = ConfigObj("../pta.conf")  
+print CONFIG["sleep_time"]
 logging.basicConfig(level=logging.DEBUG)
 class Torrent:
     def __init__(self):
@@ -33,6 +36,9 @@ class BYRBT:
         self.base = 'http://bt.byr.cn/'
         self.torrent_url = self.base + 'torrents.php'            
         self.torrents = []
+
+        global CONFIG
+        self.torrent_dir = CONFIG["torrent_dir"]
         self.cookies = {'c_secure_uid'          : 'ODczMzI%3D',
                         'c_secure_pass'         : '7baad74980c4d1cfc592370f9e65629f',
                         'c_secure_ssl'          : 'bm9wZQ%3D%3D',
@@ -106,10 +112,13 @@ class BYRBT:
         
 
     def download_torrent(self):
+	'''
+	only download hot torrents for now
+	'''
         for t in self.torrents:
             if t.is_hot == False:
                 continue
-            f = open('./%s.torrent' % t.id, 'w')
+            f = open('../'+self.torrent_dir+'./%s.torrent' % t.id, 'w')
             r = requests.get(self.base + t.download_url, cookies = self.cookies, headers = self.headers)
             f.write(r.content)
             f.close()
@@ -120,7 +129,7 @@ if __name__ == "__main__":
     for t in a.torrents:
            t.echo_info()
     print a.dump_json()
-    #a.download_torrent()        
+    a.download_torrent()        
     '''
     r = requests.get("http://mdb.minms.com/douban/10463953/JSON")
     a = r.content
